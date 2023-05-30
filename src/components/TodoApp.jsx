@@ -1,64 +1,59 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './TodoApp.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import LogoutComponent from './LogoutComponent';
+import HeaderComponent from './HeaderComponent';
+import ListTodoComponent from './ListTodoComponent';
+import WelcomeComponent from './WelcomeComponent';
+import LoginComponent from './LoginComponent';
+import AuthProvider, { useAuth } from './security/AuthContext';
+
 function TodoApp() {
-  return (
-    <div>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LoginComponent />}></Route>
-          <Route path="/login" element={<LoginComponent />}></Route>
-          <Route path="/welcome" element={<WelcomeComponent />}></Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
-}
-function LoginComponent() {
-  const navigate = useNavigate();
-  const [username, setusername] = useState('');
-  const [password, setPassword] = useState('');
-  const [authenticated, setAuthenticated] = useState(false);
-  function handleLogin() {
-    if (username === 'admin' && password === 'password') {
-      setAuthenticated(true);
-      navigate('/welcome');
+  function AuthenticatedRoute({ children }) {
+    const authContext = useAuth();
+    if (authContext.isAuthenticated) {
+      return children;
+    } else {
+      return <Navigate to="/" />;
     }
   }
   return (
-    <div className="Login">
-      <div className="LoginForm">
-        <div>
-          <label>User Name</label>
-          <input
-            type="text"
-            name="username"
-            onChange={(event) => setusername(event.target.value)}
-          />
-        </div>
-        <div>
-          <label>Password</label>
-          <input
-            type="password"
-            name="password"
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </div>
-        <div>
-          <button type="button" name="login" onClick={handleLogin}>
-            Login
-          </button>
-        </div>
-        {authenticated ? (
-          <label>Logged in successfully</label>
-        ) : (
-          <label>Incorrect credentials</label>
-        )}
-      </div>
+    <div>
+      <AuthProvider>
+        <BrowserRouter>
+          <HeaderComponent />
+          <Routes>
+            <Route path="/" element={<LoginComponent />}></Route>
+            <Route path="/login" element={<LoginComponent />}></Route>
+            <Route
+              path="/welcome/:username"
+              element={
+                <AuthenticatedRoute>
+                  <WelcomeComponent />
+                </AuthenticatedRoute>
+              }
+            ></Route>
+            <Route
+              path="/todos"
+              element={
+                <AuthenticatedRoute>
+                  <ListTodoComponent />
+                </AuthenticatedRoute>
+              }
+            ></Route>
+            <Route
+              path="/logout"
+              element={
+                <AuthenticatedRoute>
+                  <LogoutComponent />
+                </AuthenticatedRoute>
+              }
+            ></Route>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </div>
   );
 }
-function WelcomeComponent() {
-  return <div>Welcome</div>;
-}
+
 export default TodoApp;
